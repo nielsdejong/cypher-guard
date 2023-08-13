@@ -32,7 +32,7 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
                 label = child.getText()[1:]
                 if not var_name in self.node_patterns:
                     self.node_patterns[var_name] = NodePattern(var_name=var_name, labels=[])
-                self.node_patterns[var_name].labels.append(label)
+                self.node_patterns[var_name].labels.append(label.replace('`',''))
 
         if not var_name in self.node_patterns:
             self.node_patterns[var_name] = NodePattern(var_name=var_name, labels=[])
@@ -99,7 +99,7 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
 
         self.rel_patterns[rel_var_name] = RelationshipPattern(
             name=rel_var_name,
-            types=rel_types,
+            types=[t.replace('`','') for t in rel_types],
             start_node=start_node_var_name,
             end_node=end_node_var_name,
             direction=rel_direction,

@@ -1,41 +1,13 @@
 
-
-import csv
-
 from guard.guard import CypherGuard
 
-file_path = 'data/examples.csv'
+schema_string = '(Person, KNOWS, Person), (Person, WORKS_AT, Organization)'
+input_query =  'MATCH (p:Person {id:"Foo"})<-[:WORKS_AT]-(o:Organization) RETURN o.name AS name'
+correct_query = 'MATCH (p:Person {id:"Foo"})-[:WORKS_AT]->(o:Organization) RETURN o.name AS name'
 
-# Loop over the example queries
-with open(file_path) as file:
-    csv_reader = csv.reader(file, delimiter=',')
+guard = CypherGuard(schema_string=schema_string)
+output = guard.run(input_query)
 
-    # Skip header
-    next(csv_reader)
-
-    # Keep track of how many queries we can successfully fix...
-    correct_count = 0
-    incorrect_count = 0
-
-    for row in csv_reader:
-        input_query = row[0].replace('""','"')
-        schema = row[1]
-        correct_query = row[2]
-
-        cypher_guard = CypherGuard(schema)
-        result = cypher_guard.run(input_query)
-        success: bool = (result == correct_query)
-
-        if not success:
-            print("original: ", input_query.replace('\n', ' '))
-            print("result:   ", result.replace('\n', ' '))
-            print("correct:  ", correct_query.replace('\n', ' '))
-            print("=====================")
-            # break
-
-        if success:
-            correct_count += 1
-        else:
-            incorrect_count += 1
-
-print("Completed. " + str(correct_count) + "/" + str(correct_count + incorrect_count) + " queries succesfully corrected." )
+# Print the output, and whether it is equal to the correct query.
+print(output)
+print(output == correct_query)

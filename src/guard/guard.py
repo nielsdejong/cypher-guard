@@ -1,7 +1,6 @@
 from guard.util import Direction, to_schema_string
 from guard.parser.parser import extract_rel_patterns
 
-
 class CypherGuard():
     schema: set
 
@@ -45,24 +44,33 @@ class CypherGuard():
             for type in rel_types:
                 entry = to_schema_string(start, type, '*')
                 reverse_entry = to_schema_string('*', type, start)
-                if entry not in self.schema and reverse_entry in self.schema:
-                    return True
+                if entry not in self.schema:
+                    if reverse_entry in self.schema:
+                        return True
+                    else:
+                        raise Exception('Unable to fix relationship direction.')
 
         # 2. The triple [(*), (rel_type), (end label)] does not exist in the schema
         for end in end_labels:
             for type in rel_types:
                 entry = to_schema_string('*', type, end)
                 reverse_entry = to_schema_string(end, type, '*')
-                if entry not in self.schema and reverse_entry in self.schema:
-                    return True
+                if entry not in self.schema:
+                    if reverse_entry in self.schema:
+                        return True
+                    else:
+                        raise Exception('Unable to fix relationship direction.')
 
         # 3. The triple [(start label), (*), (end label)] does not exist in the schema
         for start in start_labels:
             for end in end_labels:
                 entry = to_schema_string(start, '*', end)
                 reverse_entry = to_schema_string(end, '*', start)
-                if entry not in self.schema and reverse_entry in self.schema:
-                    return True
+                if start is not end and entry not in self.schema:
+                    if reverse_entry in self.schema:
+                        return True
+                    else:
+                        raise Exception('Unable to fix relationship direction.')
         return False
 
     def reverse_relationship_pattern(self, pattern_string, direction):
@@ -84,9 +92,7 @@ class CypherGuard():
     def run(self, input) -> str:
         """
         Runs CypherGuard on an input string.
-
         """
-
         if input == 'MATCH (p:Person)<--(:Organization)--(p1:Person)\nRETURN p1':
             print('a')
 
@@ -101,6 +107,5 @@ class CypherGuard():
                     pattern_string, rel_pattern.direction)
                 output = output.replace(
                     pattern_string, reversed_pattern_string)
-                print('iunvalid')
 
         return output
