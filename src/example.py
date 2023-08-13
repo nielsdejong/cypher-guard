@@ -18,18 +18,18 @@ with open(file_path) as file:
     incorrect_count = 0
 
     for row in csv_reader:
-        input_query = row[0]
+        input_query = row[0].replace('""','"')
         schema = row[1]
         correct_query = row[2]
 
         cypher_guard = CypherGuard(schema)
-        result = cypher_guard.correct_query(input_query)
+        result = cypher_guard.run(input_query)
         success: bool = (result == correct_query)
 
-       
-        print("original: ", input_query.replace('\n', ' '))
-        print("result:   ", result.replace('\n', ' '))
-        print("correct:  ", correct_query.replace('\n', ' '))
+        if not success:
+            print("original: ", input_query.replace('\n', ' '))
+            print("result:   ", result.replace('\n', ' '))
+            print("correct:  ", correct_query.replace('\n', ' '))
 
         if success:
             correct_count += 1

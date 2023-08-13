@@ -1,7 +1,7 @@
 
 
-from util import Direction, RelationshipPattern
-from parser.generated import CypherParser, CypherParserListener
+from guard.util import Direction, RelationshipPattern, NodePattern
+from guard.generated import CypherParser, CypherParserListener
 
 
 class PatternExtractor(CypherParserListener.CypherParserListener):
@@ -9,10 +9,12 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
     Extracts patterns from the Cypher query.
     """
 
+    query: str
     node_patterns: dict
     rel_patterns: dict
 
-    def __init__(self):
+    def __init__(self, query):
+        self.query = query
         self.node_patterns = {}
         self.rel_patterns = {}
 
@@ -29,11 +31,11 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
             if type(child) == CypherParser.CypherParser.LabelExpressionContext:
                 label = child.getText()[1:]
                 if not var_name in self.node_patterns:
-                    self.node_patterns[var_name] = []
-                self.node_patterns[var_name].append(label)
+                    self.node_patterns[var_name] = NodePattern(var_name=var_name, labels=[])
+                self.node_patterns[var_name].labels.append(label)
 
         if not var_name in self.node_patterns:
-            self.node_patterns[var_name] = []
+            self.node_patterns[var_name] = NodePattern(var_name=var_name, labels=[])
 
     # Enter a path pattern.
     # A path pattern consists of 1...n repeats of blocks shaped (a)-[b]->(c)
@@ -51,12 +53,14 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
     # We found a pattern (a)-[b]->(c). Extract needed information and store it in our dictionary.
     def extractRelDetailsFromPathPattern(self, start_node_context, rel_pattern_context, end_node_context):
         # Determine the variable name of the start node.
-        start_node_var_name = 'ANON_' + str(start_node_context.start.start)
+        start_index = start_node_context.start.start
+        start_node_var_name = 'ANON_' + str(start_index)
         for child in start_node_context.children:
             if type(child) == CypherParser.CypherParser.VariableContext:
                 start_node_var_name = child.getText()
 
         # Determine the variable name of the end node.
+        end_index = end_node_context.stop.stop
         end_node_var_name = 'ANON_' + str(end_node_context.start.start)
         for child in end_node_context.children:
             if type(child) == CypherParser.CypherParser.VariableContext:
@@ -65,7 +69,7 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
         # Determine the variable name, type(s), indexes of the arrow symbols, and directions of the relationship.
         rel_var_name =  'ANON_' + str(rel_pattern_context.start.start)
         rel_direction = Direction.BOTH
-        rel_types = None
+        rel_types = []
         arrow_symbol_string_indexes = []
 
         for child in rel_pattern_context.children:
@@ -86,4 +90,4 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
             start_node=start_node_var_name,
             end_node=end_node_var_name,
             direction=rel_direction,
-            arrow_symbol_string_indexes=arrow_symbol_string_indexes)
+            pattern_string=self.query[start_index:end_index+1])

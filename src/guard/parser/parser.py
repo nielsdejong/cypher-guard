@@ -2,13 +2,13 @@
 from antlr4 import *
 from antlr4.InputStream import InputStream
 
-from parser.generated.CypherLexer import CypherLexer
-from parser.generated.CypherParser import CypherParser
-from parser.generated.CypherParserVisitor import CypherParserVisitor
-from parser.generated.CypherParserListener import CypherParserListener
-from parser.pattern_extractor import PatternExtractor
+from guard.generated.CypherLexer import CypherLexer
+from guard.generated.CypherParser import CypherParser
+from guard.generated.CypherParserVisitor import CypherParserVisitor
+from guard.generated.CypherParserListener import CypherParserListener
+from guard.parser.pattern_extractor import PatternExtractor
 
-def extract_rel_patterns_from_query(input):
+def extract_rel_patterns(input):
     input_stream = InputStream(input)
     lexer = CypherLexer(input_stream)
     lexer.removeErrorListeners() 
@@ -17,10 +17,8 @@ def extract_rel_patterns_from_query(input):
     parser = CypherParser(token_stream)
     parser.removeErrorListeners()
 
-    listener = PatternExtractor()
+    listener = PatternExtractor(input)
     tree = parser.singleQueryOrCommand()
     walker = ParseTreeWalker()
     walker.walk(listener, tree)
-    print(listener.node_patterns)
-    print(listener.rel_patterns)
-    return
+    return listener.node_patterns, listener.rel_patterns
