@@ -30,11 +30,12 @@ with open(file_path) as file:
             print("original: ", input_query.replace('\n', ' '))
             print("result:   ", result.replace('\n', ' '))
             print("correct:  ", correct_query.replace('\n', ' '))
+            print("=====================")
+            # break
 
         if success:
             correct_count += 1
         else:
             incorrect_count += 1
-        print("=====================")
 
 print("Completed. " + str(correct_count) + "/" + str(correct_count + incorrect_count) + " queries succesfully corrected." )

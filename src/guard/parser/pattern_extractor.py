@@ -50,6 +50,19 @@ class PatternExtractor(CypherParserListener.CypherParserListener):
 
         pass
 
+
+    def enterPatternComprehension(self, ctx):
+        for child in ctx.children:
+            if type(child) == CypherParser.CypherParser.PathPatternNonEmptyContext:
+                for index, grandchild in enumerate(child.children):
+                    if type(grandchild) == CypherParser.CypherParser.RelationshipPatternContext:
+                        start_node_context = child.children[index-1]
+                        rel_pattern_context = child.children[index]
+                        end_node_context = child.children[index+1]
+                        self.extractRelDetailsFromPathPattern(start_node_context, rel_pattern_context, end_node_context)
+
+        print('ah')
+
     # We found a pattern (a)-[b]->(c). Extract needed information and store it in our dictionary.
     def extractRelDetailsFromPathPattern(self, start_node_context, rel_pattern_context, end_node_context):
         # Determine the variable name of the start node.
