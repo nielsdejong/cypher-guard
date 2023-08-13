@@ -23,12 +23,7 @@ with open(file_path) as file:
         correct_query = row[2]
 
         cypher_guard = CypherGuard(schema)
-        try:
-            result = cypher_guard.run(input_query)
-        except:
-            result = ''
-
-        
+        result = cypher_guard.run(input_query)
         success: bool = (result == correct_query)
 
         if not success:

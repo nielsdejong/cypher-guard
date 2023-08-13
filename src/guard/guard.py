@@ -89,23 +89,27 @@ class CypherGuard():
             pattern_string = pattern_string.replace("-(", "->(")
         return pattern_string
 
+    def handle_relationship_pattern(self, query, rel_pattern, node_patterns):
+        to_reverse: bool = self.should_reverse_pattern(rel_pattern, node_patterns)
+        if to_reverse:
+            pattern_string = rel_pattern.pattern_string
+            reversed_pattern_string = self.reverse_relationship_pattern(
+                pattern_string, rel_pattern.direction)
+            return query.replace(pattern_string, reversed_pattern_string)
+        return query
+
+
     def run(self, input) -> str:
         """
         Runs CypherGuard on an input string.
         """
-        if input == 'MATCH (p:Person)<--(:Organization)--(p1:Person)\nRETURN p1':
-            print('a')
-
         node_patterns, relationship_patterns = extract_rel_patterns(input)
-        output = input  # deep copy input as a new output...
+        query = input  # deep copy input as a new result query...
         for rel_pattern in dict.values(relationship_patterns):
-            to_reverse: bool = self.should_reverse_pattern(
-                rel_pattern, node_patterns)
-            if to_reverse:
-                pattern_string = rel_pattern.pattern_string
-                reversed_pattern_string = self.reverse_relationship_pattern(
-                    pattern_string, rel_pattern.direction)
-                output = output.replace(
-                    pattern_string, reversed_pattern_string)
-
-        return output
+            try:
+                query = self.handle_relationship_pattern(query, rel_pattern, node_patterns)
+            except:
+                # If the direction cannot be fixed, just return an empty string as per the specification.
+                return ''
+            
+        return query
